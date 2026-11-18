@@ -1,0 +1,15 @@
+- [x] Criar identidade visual e página inicial com imagens enviadas.
+- [x] Criar páginas de clubes, roupas e eventos com navegação funcional.
+- [x] Verificar página e navegação em computador e celular.
+- [x] Deixar o layout da Kong Code responsivo (celular, tablet e computador).
+- [x] Marcar "Garanta seu ingresso" como evento "EM BREVE", igual a "Seja sócio".
+- [x] Deixar a Kong Code com cara própria, mas integrada ao site original.
+- [x] Desvincular visualmente a Kong Code do site oficial: sem cabeçalho, rodapé, abas e botões do topo; remover aba Kong Code das outras páginas; marca "KongCode".
+- [x] Definir a URL da KongCode: manter o endereço próprio .../kongcode.
+- [x] Renomear o site inteiro para KongCode: nome, textos, título das páginas e ícone do navegador.
+- [x] Usar a nova arte oficial do gorila na página inicial, nas páginas de clubes/roupas/eventos e no ícone do navegador.
+- [x] Colocar os itens "EM BREVE" sempre por último na página da KongCode.
+- [x] Adicionar o site dos licores (Família Bachiega) e atualizar o link do Instagram na página da KongCode.
+- [ ] Republicar o site para que o link público saia com o novo nome e a KongCode sem o cabeçalho do site oficial (aguardando o ok para publicar).
+- [ ] Conectar Google Sheets aos pedidos (aguarda acesso do usuário à planilha)
+- [x] Trocar a imagem da página KongCode pela arte oficial nova e mudar o texto para "-A.A.A TECNOLOGIA IMPACTA -"
