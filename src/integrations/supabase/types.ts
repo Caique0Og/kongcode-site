@@ -76,10 +76,15 @@ export type Database = {
       };
       product_orders: {
         Row: {
+          amount: number | null;
           created_at: string;
           email: string;
           full_name: string;
           id: string;
+          mp_payment_id: string | null;
+          mp_preference_id: string | null;
+          paid_at: string | null;
+          payment_status: string;
           phone: string;
           product_id: string | null;
           product_name: string;
@@ -88,10 +93,15 @@ export type Database = {
           size: string;
         };
         Insert: {
+          amount?: number | null;
           created_at?: string;
           email: string;
           full_name: string;
           id?: string;
+          mp_payment_id?: string | null;
+          mp_preference_id?: string | null;
+          paid_at?: string | null;
+          payment_status?: string;
           phone: string;
           product_id?: string | null;
           product_name: string;
@@ -100,10 +110,15 @@ export type Database = {
           size: string;
         };
         Update: {
+          amount?: number | null;
           created_at?: string;
           email?: string;
           full_name?: string;
           id?: string;
+          mp_payment_id?: string | null;
+          mp_preference_id?: string | null;
+          paid_at?: string | null;
+          payment_status?: string;
           phone?: string;
           product_id?: string | null;
           product_name?: string;

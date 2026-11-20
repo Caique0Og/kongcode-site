@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,7 @@ export function OrderDialog({
   onOpenChange: (o: boolean) => void;
 }) {
   const send = useServerFn(submitOrder);
+  const navigate = useNavigate();
   const [f, setF] = useState({ fullName: "", ra: "", phone: "", email: "", size: "" });
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
@@ -41,10 +43,14 @@ export function OrderDialog({
     if (!parsed.success) return setErr(parsed.error.issues[0]?.message ?? "Confira os dados.");
     setBusy(true);
     try {
-      await send({ data: parsed.data });
-      toast.success("Pedido enviado! Entraremos em contato.");
+      const res = await send({ data: parsed.data });
       setF({ fullName: "", ra: "", phone: "", email: "", size: "" });
       onOpenChange(false);
+      if (res.needsPayment) {
+        await navigate({ to: "/pagamento/$orderId", params: { orderId: res.orderId } });
+      } else {
+        toast.success("Pedido enviado! Entraremos em contato.");
+      }
     } catch {
       setErr("Não foi possível enviar o pedido. Tente novamente.");
     } finally {
@@ -56,7 +62,7 @@ export function OrderDialog({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="font-display text-2xl">Comprar: {product.name}</DialogTitle>
-          <DialogDescription>Preencha seus dados para registrar o pedido.</DialogDescription>
+          <DialogDescription>Preencha seus dados e siga para o pagamento.</DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4">
           <div className="space-y-1.5">
@@ -114,7 +120,11 @@ export function OrderDialog({
           </div>
           {err && <p className="text-sm text-destructive">{err}</p>}
           <Button type="submit" className="w-full" disabled={busy}>
-            {busy ? "Enviando…" : "Enviar pedido"}
+            {busy
+              ? "Enviando…"
+              : product.price != null
+                ? "Continuar para pagamento"
+                : "Enviar pedido"}
           </Button>
         </form>
       </DialogContent>

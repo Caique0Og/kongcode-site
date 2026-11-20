@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { createClient } from "@supabase/supabase-js";
+import { z } from "zod";
 import { orderSchema } from "./order-schema";
 
 // Google Sheets: quando a conexão for criada, defina GOOGLE_SHEETS_SPREADSHEET_ID
@@ -32,40 +32,121 @@ async function appendToSheet(row: string[]) {
 export const submitOrder = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => orderSchema.parse(d))
   .handler(async ({ data }) => {
-    const key = process.env["SUPABASE_PUBLISHABLE_KEY"]!;
-    const sb = createClient(process.env["SUPABASE_URL"]!, key, {
-      auth: { persistSession: false },
-      global: {
-        fetch: (input, init) => {
-          const h = new Headers(init?.headers);
-          if (key.startsWith("sb_") && h.get("Authorization") === `Bearer ${key}`)
-            h.delete("Authorization");
-          h.set("apikey", key);
-          return fetch(input, { ...init, headers: h });
-        },
-      },
-    });
-    const { error } = await sb.from("product_orders").insert({
-      product_id: data.productId,
-      product_name: data.productName,
-      size: data.size,
-      full_name: data.fullName,
-      ra: data.ra || null,
-      phone: data.phone,
-      email: data.email,
-    });
-    if (error) {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // O preço vem sempre do banco, nunca do navegador.
+    const { data: product, error: pErr } = await supabaseAdmin
+      .from("products")
+      .select("id, name, price, sizes")
+      .eq("id", data.productId)
+      .maybeSingle();
+    if (pErr) console.error(pErr);
+    if (!product) throw new Error("Produto não encontrado.");
+    if (product.sizes.length > 0 && !product.sizes.includes(data.size)) {
+      throw new Error("Tamanho indisponível.");
+    }
+    const amount = product.price == null ? null : Number(product.price);
+    const { data: order, error } = await supabaseAdmin
+      .from("product_orders")
+      .insert({
+        product_id: product.id,
+        product_name: product.name,
+        size: data.size,
+        full_name: data.fullName,
+        ra: data.ra || null,
+        phone: data.phone,
+        email: data.email,
+        amount,
+      })
+      .select("id")
+      .single();
+    if (error || !order) {
       console.error(error);
       throw new Error("Não foi possível registrar o pedido.");
     }
     await appendToSheet([
       new Date().toISOString(),
-      data.productName,
+      product.name,
       data.size,
       data.fullName,
       data.ra || "",
       data.phone,
       data.email,
     ]).catch((e) => console.error(e));
-    return { ok: true };
+    return { ok: true, orderId: order.id, needsPayment: amount != null && amount > 0 };
+  });
+
+const orderIdSchema = z.object({ orderId: z.string().uuid() });
+
+/** Dados mínimos do pedido para a tela de pagamento (quem tem o link do pedido). */
+export const getOrderForPayment = createServerFn({ method: "GET" })
+  .inputValidator((d: unknown) => orderIdSchema.parse(d))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: order, error } = await supabaseAdmin
+      .from("product_orders")
+      .select("id, product_id, product_name, size, full_name, amount, payment_status, created_at")
+      .eq("id", data.orderId)
+      .maybeSingle();
+    if (error) console.error(error);
+    if (!order) return null;
+    let image: string | null = null;
+    if (order.product_id) {
+      const { data: p } = await supabaseAdmin
+        .from("products")
+        .select("images")
+        .eq("id", order.product_id)
+        .maybeSingle();
+      image = p?.images[0] ?? null;
+    }
+    return {
+      id: order.id,
+      productName: order.product_name,
+      size: order.size,
+      firstName: order.full_name.split(/\s+/)[0] ?? "",
+      amount: order.amount == null ? null : Number(order.amount),
+      status: order.payment_status,
+      image,
+    };
+  });
+
+/** Cria a preferência no Mercado Pago e devolve o link do checkout. */
+export const startPayment = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => orderIdSchema.parse(d))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const mp = await import("./mercadopago.server");
+    const { getRequestUrl } = await import("@tanstack/react-start/server");
+    const { data: order, error } = await supabaseAdmin
+      .from("product_orders")
+      .select("id, product_name, size, full_name, email, amount, payment_status")
+      .eq("id", data.orderId)
+      .maybeSingle();
+    if (error) console.error(error);
+    if (!order) throw new Error("Pedido não encontrado.");
+    if (order.payment_status === "approved") throw new Error("Este pedido já foi pago.");
+    if (order.amount == null || Number(order.amount) <= 0) {
+      throw new Error("Este pedido não tem valor para pagamento.");
+    }
+    const pref = await mp.createPreference({
+      orderId: order.id,
+      title: `${order.product_name} (${order.size})`,
+      amount: Number(order.amount),
+      payer: { name: order.full_name, email: order.email },
+      baseUrl: mp.siteUrl(getRequestUrl().origin),
+    });
+    await supabaseAdmin
+      .from("product_orders")
+      .update({ mp_preference_id: pref.id })
+      .eq("id", order.id);
+    return { url: pref.init_point };
+  });
+
+/** Chamado na volta do checkout: confere o pagamento direto na API do Mercado Pago. */
+export const confirmPayment = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) =>
+    z.object({ orderId: z.string().uuid(), paymentId: z.string().regex(/^\d{1,30}$/) }).parse(d),
+  )
+  .handler(async ({ data }) => {
+    const mp = await import("./mercadopago.server");
+    return mp.syncPayment(data.paymentId, data.orderId);
   });
