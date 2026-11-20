@@ -50,6 +50,13 @@
       "when": 1795312000000,
       "tag": "0006_admin_audit_log",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1795314000000,
+      "tag": "0007_admin_tabs",
+      "breakpoints": true
     }
   ]
 }

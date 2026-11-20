@@ -8,6 +8,12 @@ export type Database = {
   };
   public: {
     Tables: {
+      admin_emails: {
+        Row: { created_at: string; email: string };
+        Insert: { created_at?: string; email: string };
+        Update: { created_at?: string; email?: string };
+        Relationships: [];
+      };
       admin_audit_log: {
         Row: {
           action: string;
@@ -94,6 +100,8 @@ export type Database = {
         Row: {
           amount: number | null;
           created_at: string;
+          delivered_at: string | null;
+          delivery_status: string;
           email: string;
           full_name: string;
           id: string;
@@ -113,6 +121,8 @@ export type Database = {
         Insert: {
           amount?: number | null;
           created_at?: string;
+          delivered_at?: string | null;
+          delivery_status?: string;
           email: string;
           full_name: string;
           id?: string;
@@ -132,6 +142,8 @@ export type Database = {
         Update: {
           amount?: number | null;
           created_at?: string;
+          delivered_at?: string | null;
+          delivery_status?: string;
           email?: string;
           full_name?: string;
           id?: string;

@@ -12,8 +12,7 @@ const TOKEN_URL = "https://oauth2.googleapis.com/token";
 let cachedToken: { value: string; expiresAt: number } | undefined;
 
 function base64url(data: ArrayBuffer | Uint8Array | string): string {
-  const bytes =
-    typeof data === "string" ? new TextEncoder().encode(data) : new Uint8Array(data);
+  const bytes = typeof data === "string" ? new TextEncoder().encode(data) : new Uint8Array(data);
   let bin = "";
   for (const b of bytes) bin += String.fromCharCode(b);
   return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
@@ -112,7 +111,9 @@ const STATUS_LABEL: Record<string, string> = {
 
 /** Colunas: data/hora | código | produto | tamanho | nome | RA | telefone | e-mail | valor | status */
 export function appendOrderToSheet(order: SheetOrder): Promise<boolean> {
-  const when = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }).replace(",", "");
+  const when = new Date()
+    .toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })
+    .replace(",", "");
   return appendSheetRow([
     when,
     order.order_code,
@@ -133,8 +134,8 @@ export function appendOrderToSheet(order: SheetOrder): Promise<boolean> {
 function sheetsConfigured() {
   return Boolean(
     process.env["GOOGLE_SERVICE_ACCOUNT_EMAIL"] &&
-      process.env["GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY"] &&
-      process.env["GOOGLE_SHEETS_SPREADSHEET_ID"],
+    process.env["GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY"] &&
+    process.env["GOOGLE_SHEETS_SPREADSHEET_ID"],
   );
 }
 

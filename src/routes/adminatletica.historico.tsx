@@ -23,6 +23,7 @@ const AREA: Record<string, string> = {
   products: "Roupas",
   events: "Eventos",
   admin_emails: "Admins",
+  product_orders: "Pedidos",
 };
 const ACTION: Record<string, { label: string; className: string }> = {
   INSERT: { label: "Criou", className: "bg-emerald-500/15 text-emerald-400" },
@@ -46,6 +47,8 @@ const FIELD: Record<string, string> = {
   ticket_url: "Link do ingresso",
   sort_order: "Ordem",
   email: "E-mail",
+  delivery_status: "Entrega",
+  delivered_at: "Entregue em",
 };
 const HIDDEN = new Set(["id", "created_at", "updated_at"]);
 
@@ -62,7 +65,7 @@ function show(v: Json | undefined): string {
 
 function itemName(e: Entry) {
   const d = { ...asObject(e.old_data), ...asObject(e.new_data) };
-  return show(d["name"] ?? d["title"] ?? d["email"] ?? e.record_id ?? undefined);
+  return show(d["name"] ?? d["title"] ?? d["order_code"] ?? d["email"] ?? e.record_id ?? undefined);
 }
 
 function changes(e: Entry) {
@@ -94,18 +97,22 @@ function Historico() {
   if (isLoading) return <p className="text-muted-foreground">Carregando histórico…</p>;
   if (error) return <p className="text-destructive">Não foi possível carregar o histórico.</p>;
   if (data === null)
-    return <p className="text-muted-foreground">Esta página é exclusiva do presidente da atlética.</p>;
+    return (
+      <p className="text-muted-foreground">Esta página é exclusiva do presidente da atlética.</p>
+    );
 
   return (
     <section className="space-y-4">
       <div>
         <h2 className="font-display text-2xl font-bold">Histórico de alterações</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Tudo o que os admins criaram, editaram ou excluíram no site. Só a conta do presidente
-          vê esta página, e os registros não podem ser apagados pelo painel.
+          Tudo o que os admins criaram, editaram ou excluíram no site. Só a conta do presidente vê
+          esta página, e os registros não podem ser apagados pelo painel.
         </p>
       </div>
-      {!data?.length && <p className="text-muted-foreground">Nenhuma alteração registrada ainda.</p>}
+      {!data?.length && (
+        <p className="text-muted-foreground">Nenhuma alteração registrada ainda.</p>
+      )}
       <ul className="space-y-3">
         {data?.map((e) => {
           const act = ACTION[e.action] ?? { label: e.action, className: "bg-muted" };

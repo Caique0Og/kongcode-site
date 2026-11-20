@@ -58,7 +58,13 @@ function AdminLayout() {
     { to: "/adminatletica/clubes", label: "Clubes" },
     { to: "/adminatletica/roupas", label: "Roupas" },
     { to: "/adminatletica/eventos", label: "Eventos" },
-    ...(isOwner ? [{ to: "/adminatletica/historico", label: "Histórico" } as const] : []),
+    { to: "/adminatletica/pedidos", label: "Pedidos" },
+    ...(isOwner
+      ? ([
+          { to: "/adminatletica/admins", label: "Admins" },
+          { to: "/adminatletica/historico", label: "Histórico" },
+        ] as const)
+      : []),
   ];
   return (
     <main className="site-width min-h-[70vh] py-10 md:py-14">
