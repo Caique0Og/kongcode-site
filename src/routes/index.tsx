@@ -2,10 +2,7 @@ import { Fragment } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, ArrowUpRight, Users, Shirt, CalendarDays, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import torcida from "@/assets/impacta_torcida.asset.json";
-import mascot from "@/assets/impacta_mascote.asset.json";
-import logo from "@/assets/impacta_logo.asset.json";
-import busto from "@/assets/logo-gorila-branco-fundo-azul.png.asset.json";
+import { images } from "@/lib/images";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -36,7 +33,7 @@ const cards = [
     description: "Interesses em comum. Novas amizades. Um clube para chamar de seu.",
     to: "/clubes",
     label: "Conheça os clubes",
-    image: mascot.url,
+    image: images.mascote,
     style: "card-clubs",
     icon: Users,
   },
@@ -47,7 +44,7 @@ const cards = [
     description: "Leve o orgulho de ser KongCode com você, dentro e fora do campus.",
     to: "/roupas",
     label: "Explore as roupas",
-    image: logo.url,
+    image: images.logo,
     style: "card-gear",
     icon: Shirt,
   },
@@ -58,7 +55,7 @@ const cards = [
     description: "A energia da nossa torcida e os encontros que viram boas histórias.",
     to: "/eventos",
     label: "Veja os eventos",
-    image: torcida.url,
+    image: images.torcida,
     style: "card-events",
     icon: CalendarDays,
   },
@@ -69,7 +66,7 @@ function Index() {
       <section className="hero">
         <img
           className="hero-art"
-          src={busto.url}
+          src={images.gorilaBusto}
           alt="Gorila do KongCode com capacete tecnológico e óculos azuis"
         />
         <div className="site-width hero-content">
@@ -178,7 +175,7 @@ function Index() {
           </div>
           <img
             className="community-art hidden md:block"
-            src={busto.url}
+            src={images.gorilaBusto}
             alt="Gorila do KongCode com capacete tecnológico"
             loading="lazy"
           />

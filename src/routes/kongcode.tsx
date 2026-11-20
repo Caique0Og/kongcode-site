@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
-import gorila from "@/assets/kongcode-oficial.png.asset.json";
+import { images } from "@/lib/images";
 import { GENERAL_GROUP_URL } from "@/lib/content";
 import { INSTAGRAM_URL } from "@/components/atletica/site-shell";
 
@@ -63,7 +63,7 @@ function KongCode() {
           <section className="mx-auto w-full max-w-[420px] text-center md:mx-0 md:max-w-none md:text-left">
             <div className="kong-photo mx-auto w-full max-w-[200px] sm:max-w-[240px] md:mx-0 md:max-w-[210px] lg:max-w-[300px]">
               <img
-                src={gorila.url}
+                src={images.kongcodeOficial}
                 alt="Arte oficial do KongCode: gorila de moletom azul com o logo KongCode"
               />
             </div>

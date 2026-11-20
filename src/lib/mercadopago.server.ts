@@ -2,6 +2,8 @@
 // SOMENTE servidor: usa MP_ACCESS_TOKEN, que nunca pode ir para o navegador.
 // Importe dinamicamente dentro de handlers: await import("@/lib/mercadopago.server").
 
+import { syncOrderToSheet } from "./google-sheets.server";
+
 const MP_API = "https://api.mercadopago.com";
 
 export type PaymentStatus =
@@ -211,6 +213,8 @@ export async function syncPayment(paymentId: string, expectedOrderId?: string) {
   }
   // Um pedido aprovado só muda se o pagamento for estornado/cancelado.
   if (order.payment_status === "approved" && status !== "refunded" && status !== "cancelled") {
+    // Reenvia se uma tentativa anterior de mandar para a planilha falhou.
+    await syncOrderToSheet(orderId);
     return { orderId, status: order.payment_status as PaymentStatus };
   }
 
@@ -223,6 +227,7 @@ export async function syncPayment(paymentId: string, expectedOrderId?: string) {
     })
     .eq("id", orderId);
   if (upErr) throw upErr;
+  if (status === "approved") await syncOrderToSheet(orderId);
   return { orderId, status };
 }
 

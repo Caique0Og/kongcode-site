@@ -22,7 +22,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import busto from "@/assets/logo-gorila-branco-fundo-azul.png.asset.json";
+import { images } from "@/lib/images";
 import {
   clubsQuery,
   productsQuery,
@@ -274,7 +274,7 @@ export function CategoryPage({ category }: { category: Cat }) {
       {category === "clubes" ? <Clubs /> : category === "roupas" ? <Products /> : <Events />}
       <div className="mt-10 flex items-center justify-between gap-4">
         <p className="font-display text-xl font-semibold">O orgulho de ser KongCode.</p>
-        <img src={busto.url} alt="Gorila do KongCode" className="h-20 w-20 object-contain" />
+        <img src={images.gorilaBusto} alt="Gorila do KongCode" className="h-20 w-20 object-contain" />
       </div>
       <Button asChild variant="link" className="mt-4 px-0">
         <Link to={category === "clubes" ? "/eventos" : "/clubes"}>

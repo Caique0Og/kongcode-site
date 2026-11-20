@@ -29,6 +29,34 @@
       "when": 1795222000000,
       "tag": "0003_order_code_and_customer",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1795308000000,
+      "tag": "0004_images_fora_do_lovable",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1795310000000,
+      "tag": "0005_admin_emails",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1795312000000,
+      "tag": "0006_admin_audit_log",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1795314000000,
+      "tag": "0007_admin_tabs",
+      "breakpoints": true
     }
   ]
 }

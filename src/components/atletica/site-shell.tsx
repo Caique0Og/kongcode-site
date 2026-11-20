@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Menu, X, Heart, ArrowRight, Instagram, MessageCircle, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import logo from "@/assets/impacta_logo.asset.json";
+import { images } from "@/lib/images";
 import { GENERAL_GROUP_URL } from "@/lib/content";
 
 const navigation = [
@@ -20,7 +20,7 @@ export function SiteHeader() {
       <div className="site-width flex h-full items-center justify-between gap-6">
         <Link to="/" aria-label="KongCode — início" className="brand">
           <div className="brand-image">
-            <img src={logo.url} alt="" />
+            <img src={images.logo} alt="" />
           </div>
           <div className="brand-name">
             KONG<b>CODE</b>

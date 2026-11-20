@@ -8,6 +8,28 @@ export type Database = {
   };
   public: {
     Tables: {
+      admin_emails: {
+        Row: { created_at: string; email: string };
+        Insert: { created_at?: string; email: string };
+        Update: { created_at?: string; email?: string };
+        Relationships: [];
+      };
+      admin_audit_log: {
+        Row: {
+          action: string;
+          actor_email: string | null;
+          actor_id: string | null;
+          created_at: string;
+          id: number;
+          new_data: Json | null;
+          old_data: Json | null;
+          record_id: string | null;
+          table_name: string;
+        };
+        Insert: Record<string, never>;
+        Update: Record<string, never>;
+        Relationships: [];
+      };
       clubs: {
         Row: {
           created_at: string;
@@ -78,6 +100,8 @@ export type Database = {
         Row: {
           amount: number | null;
           created_at: string;
+          delivered_at: string | null;
+          delivery_status: string;
           email: string;
           full_name: string;
           id: string;
@@ -97,6 +121,8 @@ export type Database = {
         Insert: {
           amount?: number | null;
           created_at?: string;
+          delivered_at?: string | null;
+          delivery_status?: string;
           email: string;
           full_name: string;
           id?: string;
@@ -116,6 +142,8 @@ export type Database = {
         Update: {
           amount?: number | null;
           created_at?: string;
+          delivered_at?: string | null;
+          delivery_status?: string;
           email?: string;
           full_name?: string;
           id?: string;
@@ -190,6 +218,10 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      is_site_owner: {
+        Args: Record<PropertyKey, never>;
+        Returns: boolean;
+      };
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"];

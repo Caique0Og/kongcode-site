@@ -35,11 +35,17 @@ async function checkAdmin() {
 
 function AdminLayout() {
   const [state, setState] = useState<"loading" | "out" | "in">("loading");
+  const [isOwner, setIsOwner] = useState(false);
   const qc = useQueryClient();
   useEffect(() => {
     checkAdmin().then((ok) => setState(ok ? "in" : "out"));
+    supabase.rpc("is_site_owner").then(({ data }) => setIsOwner(!!data));
     const { data: sub } = supabase.auth.onAuthStateChange((ev) => {
-      if (ev === "SIGNED_OUT") setState("out");
+      if (ev === "SIGNED_OUT") {
+        setState("out");
+        setIsOwner(false);
+      }
+      if (ev === "SIGNED_IN") supabase.rpc("is_site_owner").then(({ data }) => setIsOwner(!!data));
     });
     return () => sub.subscription.unsubscribe();
   }, []);
@@ -52,7 +58,14 @@ function AdminLayout() {
     { to: "/adminatletica/clubes", label: "Clubes" },
     { to: "/adminatletica/roupas", label: "Roupas" },
     { to: "/adminatletica/eventos", label: "Eventos" },
-  ] as const;
+    { to: "/adminatletica/pedidos", label: "Pedidos" },
+    ...(isOwner
+      ? ([
+          { to: "/adminatletica/admins", label: "Admins" },
+          { to: "/adminatletica/historico", label: "Histórico" },
+        ] as const)
+      : []),
+  ];
   return (
     <main className="site-width min-h-[70vh] py-10 md:py-14">
       <div className="flex flex-wrap items-center justify-between gap-4">
