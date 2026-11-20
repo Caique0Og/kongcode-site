@@ -20,6 +20,7 @@ import { Route as RoupasRouteImport } from './routes/roupas'
 import { Route as AdminatleticaIndexRouteImport } from './routes/adminatletica.index'
 import { Route as AdminatleticaClubesRouteImport } from './routes/adminatletica.clubes'
 import { Route as AdminatleticaEventosRouteImport } from './routes/adminatletica.eventos'
+import { Route as AdminatleticaHistoricoRouteImport } from './routes/adminatletica.historico'
 import { Route as AdminatleticaRoupasRouteImport } from './routes/adminatletica.roupas'
 import { Route as PagamentoOrderIdRouteImport } from './routes/pagamento/$orderId'
 import { Route as ApiMercadopagoWebhookRouteImport } from './routes/api/mercadopago/webhook'
@@ -79,6 +80,11 @@ const AdminatleticaEventosRoute = AdminatleticaEventosRouteImport.update({
   path: '/eventos',
   getParentRoute: () => AdminatleticaRoute,
 } as any)
+const AdminatleticaHistoricoRoute = AdminatleticaHistoricoRouteImport.update({
+  id: '/historico',
+  path: '/historico',
+  getParentRoute: () => AdminatleticaRoute,
+} as any)
 const AdminatleticaRoupasRoute = AdminatleticaRoupasRouteImport.update({
   id: '/roupas',
   path: '/roupas',
@@ -106,6 +112,7 @@ export interface FileRoutesByFullPath {
   '/roupas': typeof RoupasRoute
   '/adminatletica/clubes': typeof AdminatleticaClubesRoute
   '/adminatletica/eventos': typeof AdminatleticaEventosRoute
+  '/adminatletica/historico': typeof AdminatleticaHistoricoRoute
   '/adminatletica/roupas': typeof AdminatleticaRoupasRoute
   '/pagamento/$orderId': typeof PagamentoOrderIdRoute
   '/adminatletica/': typeof AdminatleticaIndexRoute
@@ -121,6 +128,7 @@ export interface FileRoutesByTo {
   '/roupas': typeof RoupasRoute
   '/adminatletica/clubes': typeof AdminatleticaClubesRoute
   '/adminatletica/eventos': typeof AdminatleticaEventosRoute
+  '/adminatletica/historico': typeof AdminatleticaHistoricoRoute
   '/adminatletica/roupas': typeof AdminatleticaRoupasRoute
   '/pagamento/$orderId': typeof PagamentoOrderIdRoute
   '/adminatletica': typeof AdminatleticaIndexRoute
@@ -138,6 +146,7 @@ export interface FileRoutesById {
   '/roupas': typeof RoupasRoute
   '/adminatletica/clubes': typeof AdminatleticaClubesRoute
   '/adminatletica/eventos': typeof AdminatleticaEventosRoute
+  '/adminatletica/historico': typeof AdminatleticaHistoricoRoute
   '/adminatletica/roupas': typeof AdminatleticaRoupasRoute
   '/pagamento/$orderId': typeof PagamentoOrderIdRoute
   '/adminatletica/': typeof AdminatleticaIndexRoute
@@ -156,6 +165,7 @@ export interface FileRouteTypes {
     | '/roupas'
     | '/adminatletica/clubes'
     | '/adminatletica/eventos'
+    | '/adminatletica/historico'
     | '/adminatletica/roupas'
     | '/pagamento/$orderId'
     | '/adminatletica/'
@@ -171,6 +181,7 @@ export interface FileRouteTypes {
     | '/roupas'
     | '/adminatletica/clubes'
     | '/adminatletica/eventos'
+    | '/adminatletica/historico'
     | '/adminatletica/roupas'
     | '/pagamento/$orderId'
     | '/adminatletica'
@@ -187,6 +198,7 @@ export interface FileRouteTypes {
     | '/roupas'
     | '/adminatletica/clubes'
     | '/adminatletica/eventos'
+    | '/adminatletica/historico'
     | '/adminatletica/roupas'
     | '/pagamento/$orderId'
     | '/adminatletica/'
@@ -285,6 +297,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminatleticaEventosRouteImport
       parentRoute: typeof AdminatleticaRoute
     }
+    '/adminatletica/historico': {
+      id: '/adminatletica/historico'
+      path: '/historico'
+      fullPath: '/adminatletica/historico'
+      preLoaderRoute: typeof AdminatleticaHistoricoRouteImport
+      parentRoute: typeof AdminatleticaRoute
+    }
     '/adminatletica/roupas': {
       id: '/adminatletica/roupas'
       path: '/roupas'
@@ -312,6 +331,7 @@ declare module '@tanstack/react-router' {
 interface AdminatleticaRouteChildren {
   AdminatleticaClubesRoute: typeof AdminatleticaClubesRoute
   AdminatleticaEventosRoute: typeof AdminatleticaEventosRoute
+  AdminatleticaHistoricoRoute: typeof AdminatleticaHistoricoRoute
   AdminatleticaRoupasRoute: typeof AdminatleticaRoupasRoute
   AdminatleticaIndexRoute: typeof AdminatleticaIndexRoute
 }
@@ -319,6 +339,7 @@ interface AdminatleticaRouteChildren {
 const AdminatleticaRouteChildren: AdminatleticaRouteChildren = {
   AdminatleticaClubesRoute: AdminatleticaClubesRoute,
   AdminatleticaEventosRoute: AdminatleticaEventosRoute,
+  AdminatleticaHistoricoRoute: AdminatleticaHistoricoRoute,
   AdminatleticaRoupasRoute: AdminatleticaRoupasRoute,
   AdminatleticaIndexRoute: AdminatleticaIndexRoute,
 }

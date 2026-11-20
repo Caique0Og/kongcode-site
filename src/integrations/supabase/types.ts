@@ -8,6 +8,22 @@ export type Database = {
   };
   public: {
     Tables: {
+      admin_audit_log: {
+        Row: {
+          action: string;
+          actor_email: string | null;
+          actor_id: string | null;
+          created_at: string;
+          id: number;
+          new_data: Json | null;
+          old_data: Json | null;
+          record_id: string | null;
+          table_name: string;
+        };
+        Insert: Record<string, never>;
+        Update: Record<string, never>;
+        Relationships: [];
+      };
       clubs: {
         Row: {
           created_at: string;
@@ -190,6 +206,10 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      is_site_owner: {
+        Args: Record<PropertyKey, never>;
+        Returns: boolean;
+      };
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"];
