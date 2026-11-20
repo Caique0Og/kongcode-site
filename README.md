@@ -18,8 +18,8 @@ Scripts: `bun run build`, `bun run test`, `bun run lint`, `bun run format`.
 
 ## Imagens
 
-Os arquivos `src/assets/*.asset.json` são ponteiros para imagens hospedadas no Lovable (`/__l5e/assets-v1/...`). Fora do Lovable essas imagens não carregam. Para rodar em outro lugar, baixe as imagens originais e troque os ponteiros por arquivos reais.
+As imagens fixas do layout ficam em `public/images/` e são referenciadas em `src/lib/images.ts`. As fotos enviadas pelo painel admin vão para o bucket público `media` do Supabase Storage.
 
-## Origem
+## Deploy
 
-Projeto criado no [Lovable](https://lovable.dev).
+`bun run build` gera o Worker da Cloudflare em `.output/` (preset `cloudflare-module` do Nitro).

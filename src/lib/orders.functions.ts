@@ -3,33 +3,6 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { orderSchema } from "./order-schema";
 
-// Google Sheets: quando a conexão for criada, defina GOOGLE_SHEETS_SPREADSHEET_ID
-// (e opcionalmente GOOGLE_SHEETS_RANGE). Sem isso, o pedido fica salvo só no banco.
-async function appendToSheet(row: string[]) {
-  const lovableKey = process.env["LOVABLE_API_KEY"];
-  const sheetsKey = process.env["GOOGLE_SHEETS_API_KEY"];
-  const sheetId = process.env["GOOGLE_SHEETS_SPREADSHEET_ID"];
-  if (!lovableKey || !sheetsKey || !sheetId) return false;
-  const range = process.env["GOOGLE_SHEETS_RANGE"] || "Pedidos!A:H";
-  const res = await fetch(
-    `https://connector-gateway.lovable.dev/google_sheets/v4/spreadsheets/${sheetId}/values/${range}:append?valueInputOption=USER_ENTERED`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${lovableKey}`,
-        "X-Connection-Api-Key": sheetsKey,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ values: [row] }),
-    },
-  );
-  if (!res.ok) {
-    console.error(`Sheets append failed [${res.status}]: ${await res.text()}`);
-    return false;
-  }
-  return true;
-}
-
 /** Cria o pedido. Exige login: o pedido fica vinculado à conta e aparece em "Meus pedidos". */
 export const submitOrder = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -79,16 +52,6 @@ export const submitOrder = createServerFn({ method: "POST" })
       }
     }
     if (!order) throw new Error("Não foi possível registrar o pedido.");
-    await appendToSheet([
-      new Date().toISOString(),
-      product.name,
-      data.size,
-      data.fullName,
-      data.ra || "",
-      data.phone,
-      accountEmail,
-      order.order_code,
-    ]).catch((e) => console.error(e));
     return {
       ok: true,
       orderId: order.id,
