@@ -52,11 +52,17 @@ export const submitOrder = createServerFn({ method: "POST" })
       }
     }
     if (!order) throw new Error("Não foi possível registrar o pedido.");
+    const needsPayment = amount != null && amount > 0;
+    // Pedido sem pagamento já vai para a planilha; os pagos vão quando o pagamento for aprovado.
+    if (!needsPayment) {
+      const { syncOrderToSheet } = await import("./google-sheets.server");
+      await syncOrderToSheet(order.id);
+    }
     return {
       ok: true,
       orderId: order.id,
       orderCode: order.order_code,
-      needsPayment: amount != null && amount > 0,
+      needsPayment,
     };
   });
 
