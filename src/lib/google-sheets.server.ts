@@ -3,7 +3,7 @@
 //   GOOGLE_SERVICE_ACCOUNT_EMAIL        e-mail da conta de serviço (…@….iam.gserviceaccount.com)
 //   GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY  chave privada do JSON ("-----BEGIN PRIVATE KEY-----…"), \n pode vir escapado
 //   GOOGLE_SHEETS_SPREADSHEET_ID        id da planilha (trecho do link entre /d/ e /edit)
-//   GOOGLE_SHEETS_RANGE                 aba e colunas, padrão "Pedidos!A:J"
+//   GOOGLE_SHEETS_RANGE                 aba e colunas, padrão "'Pedidos do site'!A:J"
 // A planilha precisa estar compartilhada com o e-mail da conta de serviço como Editor.
 
 const SCOPE = "https://www.googleapis.com/auth/spreadsheets";
@@ -67,11 +67,11 @@ export async function appendSheetRow(row: (string | number)[]): Promise<boolean>
   const privateKey = process.env["GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY"];
   const sheetId = process.env["GOOGLE_SHEETS_SPREADSHEET_ID"];
   if (!email || !privateKey || !sheetId) return false;
-  const range = process.env["GOOGLE_SHEETS_RANGE"] || "Pedidos!A:J";
+  const range = process.env["GOOGLE_SHEETS_RANGE"] || "'Pedidos do site'!A:J";
   try {
     const token = await getAccessToken(email, privateKey);
     const res = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(sheetId)}/values/${encodeURIComponent(range)}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(sheetId)}/values/${encodeURIComponent(range)}:append?valueInputOption=USER_ENTERED&insertDataOption=OVERWRITE`,
       {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
@@ -101,9 +101,18 @@ export type SheetOrder = {
   payment_status: string;
 };
 
+const STATUS_LABEL: Record<string, string> = {
+  approved: "Aprovado",
+  pending: "Pendente",
+  in_process: "Em análise",
+  rejected: "Recusado",
+  cancelled: "Cancelado",
+  refunded: "Estornado",
+};
+
 /** Colunas: data/hora | código | produto | tamanho | nome | RA | telefone | e-mail | valor | status */
 export function appendOrderToSheet(order: SheetOrder): Promise<boolean> {
-  const when = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+  const when = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }).replace(",", "");
   return appendSheetRow([
     when,
     order.order_code,
@@ -115,7 +124,9 @@ export function appendOrderToSheet(order: SheetOrder): Promise<boolean> {
     `'${order.phone}`,
     order.email,
     order.amount == null ? "" : Number(order.amount),
-    order.payment_status,
+    order.amount == null || Number(order.amount) <= 0
+      ? "Sem pagamento"
+      : (STATUS_LABEL[order.payment_status] ?? order.payment_status),
   ]);
 }
 
