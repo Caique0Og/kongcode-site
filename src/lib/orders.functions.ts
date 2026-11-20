@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { orderSchema } from "./order-schema";
 
 // Google Sheets: quando a conexão for criada, defina GOOGLE_SHEETS_SPREADSHEET_ID
@@ -29,10 +30,16 @@ async function appendToSheet(row: string[]) {
   return true;
 }
 
+/** Cria o pedido. Exige login: o pedido fica vinculado à conta e aparece em "Meus pedidos". */
 export const submitOrder = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => orderSchema.parse(d))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const accountEmail =
+      typeof context.claims.email === "string" && context.claims.email
+        ? context.claims.email
+        : data.email;
     // O preço vem sempre do banco, nunca do navegador.
     const { data: product, error: pErr } = await supabaseAdmin
       .from("products")
@@ -45,24 +52,33 @@ export const submitOrder = createServerFn({ method: "POST" })
       throw new Error("Tamanho indisponível.");
     }
     const amount = product.price == null ? null : Number(product.price);
-    const { data: order, error } = await supabaseAdmin
-      .from("product_orders")
-      .insert({
-        product_id: product.id,
-        product_name: product.name,
-        size: data.size,
-        full_name: data.fullName,
-        ra: data.ra || null,
-        phone: data.phone,
-        email: data.email,
-        amount,
-      })
-      .select("id")
-      .single();
-    if (error || !order) {
-      console.error(error);
-      throw new Error("Não foi possível registrar o pedido.");
+    const row = {
+      product_id: product.id,
+      product_name: product.name,
+      size: data.size,
+      full_name: data.fullName,
+      ra: data.ra || null,
+      phone: data.phone,
+      email: accountEmail,
+      amount,
+      user_id: context.userId,
+    };
+    // O código do pedido (KC-XXXXXXXX) é gerado pelo banco; em caso raro de
+    // código repetido (violação de unicidade), tenta de novo.
+    let order: { id: string; order_code: string } | null = null;
+    for (let attempt = 0; attempt < 3 && !order; attempt++) {
+      const res = await supabaseAdmin
+        .from("product_orders")
+        .insert(row)
+        .select("id, order_code")
+        .single();
+      if (res.data) order = res.data;
+      else if (res.error?.code !== "23505") {
+        console.error(res.error);
+        break;
+      }
     }
+    if (!order) throw new Error("Não foi possível registrar o pedido.");
     await appendToSheet([
       new Date().toISOString(),
       product.name,
@@ -70,9 +86,53 @@ export const submitOrder = createServerFn({ method: "POST" })
       data.fullName,
       data.ra || "",
       data.phone,
-      data.email,
+      accountEmail,
+      order.order_code,
     ]).catch((e) => console.error(e));
-    return { ok: true, orderId: order.id, needsPayment: amount != null && amount > 0 };
+    return {
+      ok: true,
+      orderId: order.id,
+      orderCode: order.order_code,
+      needsPayment: amount != null && amount > 0,
+    };
+  });
+
+export type MyOrder = {
+  id: string;
+  code: string;
+  productName: string;
+  size: string;
+  amount: number | null;
+  status: string;
+  createdAt: string;
+  paidAt: string | null;
+};
+
+/** Pedidos da conta logada, do mais recente para o mais antigo. */
+export const getMyOrders = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<MyOrder[]> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
+      .from("product_orders")
+      .select("id, order_code, product_name, size, amount, payment_status, created_at, paid_at")
+      .eq("user_id", context.userId)
+      .order("created_at", { ascending: false })
+      .limit(100);
+    if (error) {
+      console.error(error);
+      throw new Error("Não foi possível carregar seus pedidos.");
+    }
+    return (data ?? []).map((o) => ({
+      id: o.id,
+      code: o.order_code,
+      productName: o.product_name,
+      size: o.size,
+      amount: o.amount == null ? null : Number(o.amount),
+      status: o.payment_status,
+      createdAt: o.created_at,
+      paidAt: o.paid_at,
+    }));
   });
 
 const orderIdSchema = z.object({ orderId: z.string().uuid() });
@@ -84,7 +144,9 @@ export const getOrderForPayment = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: order, error } = await supabaseAdmin
       .from("product_orders")
-      .select("id, product_id, product_name, size, full_name, amount, payment_status, created_at")
+      .select(
+        "id, order_code, product_id, product_name, size, full_name, amount, payment_status, created_at",
+      )
       .eq("id", data.orderId)
       .maybeSingle();
     if (error) console.error(error);
@@ -100,6 +162,7 @@ export const getOrderForPayment = createServerFn({ method: "GET" })
     }
     return {
       id: order.id,
+      code: order.order_code,
       productName: order.product_name,
       size: order.size,
       firstName: order.full_name.split(/\s+/)[0] ?? "",

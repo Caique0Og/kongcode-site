@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Menu, X, Heart, ArrowRight, Instagram, MessageCircle } from "lucide-react";
+import { Menu, X, Heart, ArrowRight, Instagram, MessageCircle, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/impacta_logo.asset.json";
 import { GENERAL_GROUP_URL } from "@/lib/content";
@@ -35,6 +35,11 @@ export function SiteHeader() {
           ))}
         </nav>
         <div className="hidden items-center gap-2 lg:flex">
+          <Button asChild variant="outline" className="h-10">
+            <Link to="/perfil">
+              <UserRound /> Minha conta
+            </Link>
+          </Button>
           <Button asChild className="h-10">
             <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer">
               Faça parte <Instagram />
@@ -65,6 +70,10 @@ export function SiteHeader() {
               <ArrowRight className="float-right size-4" />
             </Link>
           ))}
+          <Link to="/perfil" onClick={() => setOpen(false)} className="nav-item">
+            Minha conta e pedidos
+            <UserRound className="float-right size-4" />
+          </Link>
           <a
             href={INSTAGRAM_URL}
             target="_blank"

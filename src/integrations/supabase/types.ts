@@ -83,6 +83,7 @@ export type Database = {
           id: string;
           mp_payment_id: string | null;
           mp_preference_id: string | null;
+          order_code: string;
           paid_at: string | null;
           payment_status: string;
           phone: string;
@@ -91,6 +92,7 @@ export type Database = {
           ra: string | null;
           sheet_synced: boolean;
           size: string;
+          user_id: string | null;
         };
         Insert: {
           amount?: number | null;
@@ -100,6 +102,7 @@ export type Database = {
           id?: string;
           mp_payment_id?: string | null;
           mp_preference_id?: string | null;
+          order_code?: string;
           paid_at?: string | null;
           payment_status?: string;
           phone: string;
@@ -108,6 +111,7 @@ export type Database = {
           ra?: string | null;
           sheet_synced?: boolean;
           size: string;
+          user_id?: string | null;
         };
         Update: {
           amount?: number | null;
@@ -117,6 +121,7 @@ export type Database = {
           id?: string;
           mp_payment_id?: string | null;
           mp_preference_id?: string | null;
+          order_code?: string;
           paid_at?: string | null;
           payment_status?: string;
           phone?: string;
@@ -125,6 +130,7 @@ export type Database = {
           ra?: string | null;
           sheet_synced?: boolean;
           size?: string;
+          user_id?: string | null;
         };
         Relationships: [];
       };

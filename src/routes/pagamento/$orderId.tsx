@@ -278,7 +278,12 @@ function OrderSummary({
         )}
 
         <p className="mt-auto text-xs text-muted-foreground">
-          Guarde este link para acompanhar o pagamento. Pedido nº {order.id.slice(0, 8)}.
+          Pedido <span className="font-mono font-semibold text-foreground">{order.code}</span>. Você
+          acompanha este pedido a qualquer momento em{" "}
+          <Link to="/perfil" className="underline underline-offset-4">
+            Meu perfil
+          </Link>
+          .
         </p>
       </section>
     </div>
