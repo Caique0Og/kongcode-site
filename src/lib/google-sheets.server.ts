@@ -3,7 +3,8 @@
 //   GOOGLE_SERVICE_ACCOUNT_EMAIL        e-mail da conta de serviço (…@….iam.gserviceaccount.com)
 //   GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY  chave privada do JSON ("-----BEGIN PRIVATE KEY-----…"), \n pode vir escapado
 //   GOOGLE_SHEETS_SPREADSHEET_ID        id da planilha (trecho do link entre /d/ e /edit)
-//   GOOGLE_SHEETS_RANGE                 aba e colunas, padrão "'Pedidos do site'!A:J"
+//   SHEETS_CONTA_DEPOSITO              texto da coluna "Conta Depósito", padrão "Presidente MP"
+//   GOOGLE_SHEETS_RANGE                 aba e colunas, padrão "'Pedidos do site'!A:K"
 // A planilha precisa estar compartilhada com o e-mail da conta de serviço como Editor.
 
 const SCOPE = "https://www.googleapis.com/auth/spreadsheets";
@@ -66,7 +67,7 @@ export async function appendSheetRow(row: (string | number)[]): Promise<boolean>
   const privateKey = process.env["GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY"];
   const sheetId = process.env["GOOGLE_SHEETS_SPREADSHEET_ID"];
   if (!email || !privateKey || !sheetId) return false;
-  const range = process.env["GOOGLE_SHEETS_RANGE"] || "'Pedidos do site'!A:J";
+  const range = process.env["GOOGLE_SHEETS_RANGE"] || "'Pedidos do site'!A:K";
   try {
     const token = await getAccessToken(email, privateKey);
     const res = await fetch(
@@ -109,7 +110,7 @@ const STATUS_LABEL: Record<string, string> = {
   refunded: "Estornado",
 };
 
-/** Colunas: data/hora | código | produto | tamanho | nome | RA | telefone | e-mail | valor | status */
+/** Colunas: data/hora | código | produto | tamanho | nome | RA | telefone | e-mail | valor | conta depósito | status */
 export function appendOrderToSheet(order: SheetOrder): Promise<boolean> {
   const when = new Date()
     .toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })
@@ -125,6 +126,7 @@ export function appendOrderToSheet(order: SheetOrder): Promise<boolean> {
     `'${order.phone}`,
     order.email,
     order.amount == null ? "" : Number(order.amount),
+    process.env["SHEETS_CONTA_DEPOSITO"] || "Presidente MP",
     order.amount == null || Number(order.amount) <= 0
       ? "Sem pagamento"
       : (STATUS_LABEL[order.payment_status] ?? order.payment_status),
