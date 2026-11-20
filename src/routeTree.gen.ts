@@ -12,13 +12,17 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminatleticaRouteImport } from './routes/adminatletica'
 import { Route as ClubesRouteImport } from './routes/clubes'
+import { Route as EntrarRouteImport } from './routes/entrar'
 import { Route as EventosRouteImport } from './routes/eventos'
 import { Route as KongcodeRouteImport } from './routes/kongcode'
+import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as RoupasRouteImport } from './routes/roupas'
 import { Route as AdminatleticaIndexRouteImport } from './routes/adminatletica.index'
 import { Route as AdminatleticaClubesRouteImport } from './routes/adminatletica.clubes'
 import { Route as AdminatleticaEventosRouteImport } from './routes/adminatletica.eventos'
 import { Route as AdminatleticaRoupasRouteImport } from './routes/adminatletica.roupas'
+import { Route as PagamentoOrderIdRouteImport } from './routes/pagamento/$orderId'
+import { Route as ApiMercadopagoWebhookRouteImport } from './routes/api/mercadopago/webhook'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -35,6 +39,11 @@ const ClubesRoute = ClubesRouteImport.update({
   path: '/clubes',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EntrarRoute = EntrarRouteImport.update({
+  id: '/entrar',
+  path: '/entrar',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EventosRoute = EventosRouteImport.update({
   id: '/eventos',
   path: '/eventos',
@@ -43,6 +52,11 @@ const EventosRoute = EventosRouteImport.update({
 const KongcodeRoute = KongcodeRouteImport.update({
   id: '/kongcode',
   path: '/kongcode',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PerfilRoute = PerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RoupasRoute = RoupasRouteImport.update({
@@ -70,42 +84,64 @@ const AdminatleticaRoupasRoute = AdminatleticaRoupasRouteImport.update({
   path: '/roupas',
   getParentRoute: () => AdminatleticaRoute,
 } as any)
+const PagamentoOrderIdRoute = PagamentoOrderIdRouteImport.update({
+  id: '/pagamento/$orderId',
+  path: '/pagamento/$orderId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiMercadopagoWebhookRoute = ApiMercadopagoWebhookRouteImport.update({
+  id: '/api/mercadopago/webhook',
+  path: '/api/mercadopago/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/adminatletica': typeof AdminatleticaRouteWithChildren
   '/clubes': typeof ClubesRoute
+  '/entrar': typeof EntrarRoute
   '/eventos': typeof EventosRoute
   '/kongcode': typeof KongcodeRoute
+  '/perfil': typeof PerfilRoute
   '/roupas': typeof RoupasRoute
   '/adminatletica/clubes': typeof AdminatleticaClubesRoute
   '/adminatletica/eventos': typeof AdminatleticaEventosRoute
   '/adminatletica/roupas': typeof AdminatleticaRoupasRoute
+  '/pagamento/$orderId': typeof PagamentoOrderIdRoute
   '/adminatletica/': typeof AdminatleticaIndexRoute
+  '/api/mercadopago/webhook': typeof ApiMercadopagoWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/clubes': typeof ClubesRoute
+  '/entrar': typeof EntrarRoute
   '/eventos': typeof EventosRoute
   '/kongcode': typeof KongcodeRoute
+  '/perfil': typeof PerfilRoute
   '/roupas': typeof RoupasRoute
   '/adminatletica/clubes': typeof AdminatleticaClubesRoute
   '/adminatletica/eventos': typeof AdminatleticaEventosRoute
   '/adminatletica/roupas': typeof AdminatleticaRoupasRoute
+  '/pagamento/$orderId': typeof PagamentoOrderIdRoute
   '/adminatletica': typeof AdminatleticaIndexRoute
+  '/api/mercadopago/webhook': typeof ApiMercadopagoWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/adminatletica': typeof AdminatleticaRouteWithChildren
   '/clubes': typeof ClubesRoute
+  '/entrar': typeof EntrarRoute
   '/eventos': typeof EventosRoute
   '/kongcode': typeof KongcodeRoute
+  '/perfil': typeof PerfilRoute
   '/roupas': typeof RoupasRoute
   '/adminatletica/clubes': typeof AdminatleticaClubesRoute
   '/adminatletica/eventos': typeof AdminatleticaEventosRoute
   '/adminatletica/roupas': typeof AdminatleticaRoupasRoute
+  '/pagamento/$orderId': typeof PagamentoOrderIdRoute
   '/adminatletica/': typeof AdminatleticaIndexRoute
+  '/api/mercadopago/webhook': typeof ApiMercadopagoWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -113,45 +149,61 @@ export interface FileRouteTypes {
     | '/'
     | '/adminatletica'
     | '/clubes'
+    | '/entrar'
     | '/eventos'
     | '/kongcode'
+    | '/perfil'
     | '/roupas'
     | '/adminatletica/clubes'
     | '/adminatletica/eventos'
     | '/adminatletica/roupas'
+    | '/pagamento/$orderId'
     | '/adminatletica/'
+    | '/api/mercadopago/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/clubes'
+    | '/entrar'
     | '/eventos'
     | '/kongcode'
+    | '/perfil'
     | '/roupas'
     | '/adminatletica/clubes'
     | '/adminatletica/eventos'
     | '/adminatletica/roupas'
+    | '/pagamento/$orderId'
     | '/adminatletica'
+    | '/api/mercadopago/webhook'
   id:
     | '__root__'
     | '/'
     | '/adminatletica'
     | '/clubes'
+    | '/entrar'
     | '/eventos'
     | '/kongcode'
+    | '/perfil'
     | '/roupas'
     | '/adminatletica/clubes'
     | '/adminatletica/eventos'
     | '/adminatletica/roupas'
+    | '/pagamento/$orderId'
     | '/adminatletica/'
+    | '/api/mercadopago/webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminatleticaRoute: typeof AdminatleticaRouteWithChildren
   ClubesRoute: typeof ClubesRoute
+  EntrarRoute: typeof EntrarRoute
   EventosRoute: typeof EventosRoute
   KongcodeRoute: typeof KongcodeRoute
+  PerfilRoute: typeof PerfilRoute
   RoupasRoute: typeof RoupasRoute
+  PagamentoOrderIdRoute: typeof PagamentoOrderIdRoute
+  ApiMercadopagoWebhookRoute: typeof ApiMercadopagoWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -177,6 +229,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ClubesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/entrar': {
+      id: '/entrar'
+      path: '/entrar'
+      fullPath: '/entrar'
+      preLoaderRoute: typeof EntrarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/eventos': {
       id: '/eventos'
       path: '/eventos'
@@ -189,6 +248,13 @@ declare module '@tanstack/react-router' {
       path: '/kongcode'
       fullPath: '/kongcode'
       preLoaderRoute: typeof KongcodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/perfil': {
+      id: '/perfil'
+      path: '/perfil'
+      fullPath: '/perfil'
+      preLoaderRoute: typeof PerfilRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/roupas': {
@@ -226,6 +292,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminatleticaRoupasRouteImport
       parentRoute: typeof AdminatleticaRoute
     }
+    '/pagamento/$orderId': {
+      id: '/pagamento/$orderId'
+      path: '/pagamento/$orderId'
+      fullPath: '/pagamento/$orderId'
+      preLoaderRoute: typeof PagamentoOrderIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/mercadopago/webhook': {
+      id: '/api/mercadopago/webhook'
+      path: '/api/mercadopago/webhook'
+      fullPath: '/api/mercadopago/webhook'
+      preLoaderRoute: typeof ApiMercadopagoWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -251,9 +331,13 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminatleticaRoute: AdminatleticaRouteWithChildren,
   ClubesRoute: ClubesRoute,
+  EntrarRoute: EntrarRoute,
   EventosRoute: EventosRoute,
   KongcodeRoute: KongcodeRoute,
+  PerfilRoute: PerfilRoute,
   RoupasRoute: RoupasRoute,
+  PagamentoOrderIdRoute: PagamentoOrderIdRoute,
+  ApiMercadopagoWebhookRoute: ApiMercadopagoWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
