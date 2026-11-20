@@ -150,3 +150,71 @@ export const confirmPayment = createServerFn({ method: "POST" })
     const mp = await import("./mercadopago.server");
     return mp.syncPayment(data.paymentId, data.orderId);
   });
+
+/**
+ * Gera (ou reaproveita) a cobrança Pix do pedido e devolve o QR code para
+ * exibir na própria página. Se já existe um Pix pendente e válido, devolve o mesmo.
+ */
+export const startPixPayment = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => orderIdSchema.parse(d))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const mp = await import("./mercadopago.server");
+    const { getRequestUrl } = await import("@tanstack/react-start/server");
+    const { data: order, error } = await supabaseAdmin
+      .from("product_orders")
+      .select("id, product_name, size, full_name, email, amount, payment_status, mp_payment_id")
+      .eq("id", data.orderId)
+      .maybeSingle();
+    if (error) console.error(error);
+    if (!order) throw new Error("Pedido não encontrado.");
+    if (order.payment_status === "approved") throw new Error("Este pedido já foi pago.");
+    if (order.amount == null || Number(order.amount) <= 0) {
+      throw new Error("Este pedido não tem valor para pagamento.");
+    }
+
+    if (order.mp_payment_id) {
+      const existing = await mp
+        .getPayment(order.mp_payment_id)
+        .then(mp.toPixCharge)
+        .catch(() => null);
+      if (mp.isPixUsable(existing)) return existing;
+    }
+
+    const charge = await mp.createPixPayment({
+      orderId: order.id,
+      description: `${order.product_name} (${order.size})`,
+      amount: Number(order.amount),
+      payer: { name: order.full_name, email: order.email },
+      baseUrl: mp.siteUrl(getRequestUrl().origin),
+    });
+    const { error: upErr } = await supabaseAdmin
+      .from("product_orders")
+      .update({ mp_payment_id: charge.paymentId, payment_status: "pending" })
+      .eq("id", order.id)
+      .neq("payment_status", "approved");
+    if (upErr) console.error(upErr);
+    return charge;
+  });
+
+/**
+ * Consulta o último pagamento do pedido no Mercado Pago e atualiza o status.
+ * Usado enquanto o QR code do Pix está na tela (o webhook também atualiza).
+ */
+export const refreshPaymentStatus = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => orderIdSchema.parse(d))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: order } = await supabaseAdmin
+      .from("product_orders")
+      .select("mp_payment_id, payment_status")
+      .eq("id", data.orderId)
+      .maybeSingle();
+    if (!order) throw new Error("Pedido não encontrado.");
+    if (!order.mp_payment_id || order.payment_status === "approved") {
+      return { status: order.payment_status };
+    }
+    const mp = await import("./mercadopago.server");
+    const res = await mp.syncPayment(order.mp_payment_id, data.orderId);
+    return { status: res.status };
+  });

@@ -80,7 +80,82 @@ export type MpPayment = {
   external_reference: string | null;
   transaction_amount: number;
   date_approved: string | null;
+  payment_method_id?: string;
+  date_of_expiration?: string | null;
+  point_of_interaction?: {
+    transaction_data?: {
+      qr_code?: string;
+      qr_code_base64?: string;
+      ticket_url?: string;
+    };
+  };
 };
+
+export type PixCharge = {
+  paymentId: string;
+  status: PaymentStatus;
+  qrCode: string;
+  qrCodeBase64: string;
+  ticketUrl: string | null;
+  expiresAt: string | null;
+};
+
+/** Tempo para pagar o Pix antes do QR code expirar. */
+const PIX_TTL_MINUTES = 30;
+
+export function toPixCharge(p: MpPayment): PixCharge | null {
+  const td = p.point_of_interaction?.transaction_data;
+  if (p.payment_method_id !== "pix" || !td?.qr_code || !td.qr_code_base64) return null;
+  return {
+    paymentId: String(p.id),
+    status: normalizeStatus(p.status),
+    qrCode: td.qr_code,
+    qrCodeBase64: td.qr_code_base64,
+    ticketUrl: td.ticket_url ?? null,
+    expiresAt: p.date_of_expiration ?? null,
+  };
+}
+
+/** Pix ainda pagável: pendente e com pelo menos 2 minutos antes de expirar. */
+export function isPixUsable(c: PixCharge | null): c is PixCharge {
+  if (!c || c.status !== "pending") return false;
+  return !c.expiresAt || new Date(c.expiresAt).getTime() - Date.now() > 2 * 60_000;
+}
+
+/**
+ * Cria um pagamento Pix pela API de Payments. A resposta já traz o QR code
+ * (imagem em base64) e o código "copia e cola" para mostrar no site.
+ */
+export async function createPixPayment(opts: {
+  orderId: string;
+  description: string;
+  amount: number;
+  payer: { name: string; email: string };
+  baseUrl: string;
+}) {
+  const [firstName = "", ...rest] = opts.payer.name.trim().split(/\s+/);
+  const expiresAt = new Date(Date.now() + PIX_TTL_MINUTES * 60_000);
+  const body = {
+    transaction_amount: Math.round(opts.amount * 100) / 100,
+    description: opts.description.slice(0, 250),
+    payment_method_id: "pix",
+    external_reference: opts.orderId,
+    date_of_expiration: expiresAt.toISOString().replace("Z", "-00:00"),
+    payer: { email: opts.payer.email, first_name: firstName, last_name: rest.join(" ") },
+    ...(opts.baseUrl.startsWith("https://")
+      ? { notification_url: `${opts.baseUrl}/api/mercadopago/webhook` }
+      : {}),
+  };
+  const payment = await mpFetch<MpPayment>("/v1/payments", {
+    method: "POST",
+    headers: { "X-Idempotency-Key": `pix-${opts.orderId}-${Date.now()}` },
+    body: JSON.stringify(body),
+  });
+  const charge = toPixCharge(payment);
+  if (!charge)
+    throw new Error(`Mercado Pago não devolveu o QR code do Pix (pagamento ${payment.id}).`);
+  return charge;
+}
 
 export function getPayment(paymentId: string) {
   if (!/^\d{1,30}$/.test(paymentId)) throw new Error("payment_id inválido");

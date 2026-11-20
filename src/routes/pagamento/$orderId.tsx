@@ -7,6 +7,7 @@ import {
   ArrowLeft,
   CheckCircle2,
   Clock,
+  Copy,
   CreditCard,
   Loader2,
   QrCode,
@@ -15,7 +16,13 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/content";
-import { confirmPayment, getOrderForPayment, startPayment } from "@/lib/orders.functions";
+import {
+  confirmPayment,
+  getOrderForPayment,
+  refreshPaymentStatus,
+  startPayment,
+  startPixPayment,
+} from "@/lib/orders.functions";
 
 const searchSchema = z.object({
   payment_id: z.union([z.string(), z.number()]).optional().catch(undefined),
@@ -77,8 +84,11 @@ function PaymentPage() {
   const fetchOrder = useServerFn(getOrderForPayment);
   const start = useServerFn(startPayment);
   const confirm = useServerFn(confirmPayment);
-  const [busy, setBusy] = useState(false);
+  const startPix = useServerFn(startPixPayment);
+  const refresh = useServerFn(refreshPaymentStatus);
+  const [busy, setBusy] = useState<"" | "pix" | "card">("");
   const [err, setErr] = useState("");
+  const [pix, setPix] = useState<Pix | null>(null);
   const confirmed = useRef(false);
 
   const queryKey = ["payment-order", orderId];
@@ -100,15 +110,43 @@ function PaymentPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paymentId, orderId]);
 
+  // Com o QR code do Pix na tela, confere o pagamento a cada 5s.
+  const waitingPix = pix != null && order?.status !== "approved";
+  useEffect(() => {
+    if (!waitingPix) return;
+    const t = setInterval(() => {
+      refresh({ data: { orderId } })
+        .then((r) => {
+          if (r.status !== "pending") qc.invalidateQueries({ queryKey });
+        })
+        .catch((e) => console.error(e));
+    }, 5000);
+    return () => clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [waitingPix, orderId]);
+
   async function pay() {
     setErr("");
-    setBusy(true);
+    setBusy("card");
     try {
       const { url } = await start({ data: { orderId } });
       window.location.href = url;
     } catch {
       setErr("Não foi possível abrir o pagamento. Tente novamente em instantes.");
-      setBusy(false);
+      setBusy("");
+    }
+  }
+
+  async function payPix() {
+    setErr("");
+    setBusy("pix");
+    try {
+      setPix(await startPix({ data: { orderId } }));
+      qc.invalidateQueries({ queryKey });
+    } catch {
+      setErr("Não foi possível gerar o Pix. Tente novamente em instantes.");
+    } finally {
+      setBusy("");
     }
   }
 
@@ -130,24 +168,39 @@ function PaymentPage() {
           Pedido não encontrado. Confira o link ou faça um novo pedido na página de roupas.
         </p>
       ) : (
-        <OrderSummary order={order} busy={busy} err={err} onPay={pay} />
+        <OrderSummary
+          order={order}
+          busy={busy}
+          err={err}
+          pix={order.status === "approved" ? null : pix}
+          onPay={pay}
+          onPayPix={payPix}
+          onClosePix={() => setPix(null)}
+        />
       )}
     </main>
   );
 }
 
 type Order = NonNullable<Awaited<ReturnType<typeof getOrderForPayment>>>;
+type Pix = Awaited<ReturnType<typeof startPixPayment>>;
 
 function OrderSummary({
   order,
   busy,
   err,
+  pix,
   onPay,
+  onPayPix,
+  onClosePix,
 }: {
   order: Order;
-  busy: boolean;
+  busy: "" | "pix" | "card";
   err: string;
+  pix: Pix | null;
   onPay: () => void;
+  onPayPix: () => void;
+  onClosePix: () => void;
 }) {
   const st = STATUS[order.status] ?? STATUS["pending"]!;
   const Icon = st.icon;
@@ -192,28 +245,28 @@ function OrderSummary({
           {st.text.charAt(0).toLowerCase() + st.text.slice(1)}
         </p>
 
-        {canPay && (
+        {canPay && pix && <PixPanel pix={pix} onBack={onClosePix} />}
+
+        {canPay && !pix && (
           <>
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div className="flex items-center gap-2 rounded border border-border px-3 py-2">
-                <QrCode className="size-4 text-primary" /> Pix
-              </div>
-              <div className="flex items-center gap-2 rounded border border-border px-3 py-2">
-                <CreditCard className="size-4 text-primary" /> Cartão
-              </div>
-            </div>
             {err && <p className="text-sm text-destructive">{err}</p>}
-            <Button size="lg" className="w-full" disabled={busy} onClick={onPay}>
-              {busy ? <Loader2 className="animate-spin" /> : null}
-              {busy
-                ? "Abrindo Mercado Pago…"
-                : order.status === "pending"
-                  ? `Pagar ${formatPrice(order.amount)}`
-                  : "Tentar pagar de novo"}
+            <Button size="lg" className="w-full" disabled={!!busy} onClick={onPayPix}>
+              {busy === "pix" ? <Loader2 className="animate-spin" /> : <QrCode />}
+              {busy === "pix" ? "Gerando Pix…" : `Pagar ${formatPrice(order.amount)} com Pix`}
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              className="w-full"
+              disabled={!!busy}
+              onClick={onPay}
+            >
+              {busy === "card" ? <Loader2 className="animate-spin" /> : <CreditCard />}
+              {busy === "card" ? "Abrindo Mercado Pago…" : "Pagar com cartão"}
             </Button>
             <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <ShieldCheck className="size-3.5" />
-              Você será levado ao ambiente seguro do Mercado Pago.
+              Pix é pago aqui mesmo. Cartão abre o ambiente seguro do Mercado Pago.
             </p>
           </>
         )}
@@ -228,6 +281,51 @@ function OrderSummary({
           Guarde este link para acompanhar o pagamento. Pedido nº {order.id.slice(0, 8)}.
         </p>
       </section>
+    </div>
+  );
+}
+
+function PixPanel({ pix, onBack }: { pix: Pix; onBack: () => void }) {
+  const [copied, setCopied] = useState(false);
+  const expires = pix.expiresAt
+    ? new Date(pix.expiresAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
+    : null;
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(pix.qrCode);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    } catch {
+      setCopied(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col items-center gap-4 text-center">
+      <img
+        src={`data:image/png;base64,${pix.qrCodeBase64}`}
+        alt="QR code do Pix"
+        className="size-56 rounded bg-white p-2"
+      />
+      <p className="text-sm text-muted-foreground">
+        Abra o app do seu banco, escolha pagar com Pix e escaneie o QR code ou use o código abaixo.
+      </p>
+      <div className="w-full rounded border border-border bg-muted/40 px-3 py-2 text-left font-mono text-xs break-all">
+        {pix.qrCode}
+      </div>
+      <Button className="w-full" onClick={copy}>
+        {copied ? <CheckCircle2 /> : <Copy />}
+        {copied ? "Código copiado" : "Copiar código Pix"}
+      </Button>
+      <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        <Loader2 className="size-3.5 animate-spin" />
+        Aguardando pagamento{expires ? `, válido até ${expires}` : ""}. Esta página atualiza
+        sozinha.
+      </p>
+      <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={onBack}>
+        Escolher outra forma de pagamento
+      </Button>
     </div>
   );
 }
