@@ -3,6 +3,7 @@ export const orderSchema = z.object({
   productId: z.string().uuid(),
   productName: z.string().trim().min(1).max(200),
   size: z.string().trim().min(1, "Escolha um tamanho").max(30),
+  color: z.string().trim().max(60).optional().or(z.literal("")),
   fullName: z.string().trim().min(3, "Informe seu nome completo").max(120),
   ra: z
     .string()

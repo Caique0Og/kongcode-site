@@ -21,6 +21,11 @@ export const Route = createFileRoute("/adminatletica/roupas")({
           type: "list",
           required: true,
         },
+        {
+          key: "colors",
+          label: "Cores/Modelos (opcional, separados por vírgula, ex.: Preta, Azul)",
+          type: "list",
+        },
         { key: "order_url", label: "Link de compra/pedido (opcional)", type: "url" },
       ]}
     />

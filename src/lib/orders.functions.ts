@@ -16,7 +16,7 @@ export const submitOrder = createServerFn({ method: "POST" })
     // O preço vem sempre do banco, nunca do navegador.
     const { data: product, error: pErr } = await supabaseAdmin
       .from("products")
-      .select("id, name, price, sizes")
+      .select("id, name, price, sizes, colors")
       .eq("id", data.productId)
       .maybeSingle();
     if (pErr) console.error(pErr);
@@ -24,11 +24,16 @@ export const submitOrder = createServerFn({ method: "POST" })
     if (product.sizes.length > 0 && !product.sizes.includes(data.size)) {
       throw new Error("Tamanho indisponível.");
     }
+    const color = data.color?.trim() || null;
+    if (product.colors.length > 0 && (!color || !product.colors.includes(color))) {
+      throw new Error("Cor/modelo indisponível.");
+    }
     const amount = product.price == null ? null : Number(product.price);
     const row = {
       product_id: product.id,
       product_name: product.name,
       size: data.size,
+      color: product.colors.length > 0 ? color : null,
       full_name: data.fullName,
       ra: data.ra || null,
       phone: data.phone,
@@ -71,6 +76,7 @@ export type MyOrder = {
   code: string;
   productName: string;
   size: string;
+  color: string | null;
   amount: number | null;
   status: string;
   createdAt: string;
@@ -84,7 +90,9 @@ export const getMyOrders = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin
       .from("product_orders")
-      .select("id, order_code, product_name, size, amount, payment_status, created_at, paid_at")
+      .select(
+        "id, order_code, product_name, size, color, amount, payment_status, created_at, paid_at",
+      )
       .eq("user_id", context.userId)
       .order("created_at", { ascending: false })
       .limit(100);
@@ -97,6 +105,7 @@ export const getMyOrders = createServerFn({ method: "GET" })
       code: o.order_code,
       productName: o.product_name,
       size: o.size,
+      color: o.color,
       amount: o.amount == null ? null : Number(o.amount),
       status: o.payment_status,
       createdAt: o.created_at,
@@ -114,7 +123,7 @@ export const getOrderForPayment = createServerFn({ method: "GET" })
     const { data: order, error } = await supabaseAdmin
       .from("product_orders")
       .select(
-        "id, order_code, product_id, product_name, size, full_name, amount, payment_status, created_at",
+        "id, order_code, product_id, product_name, size, color, full_name, amount, payment_status, created_at",
       )
       .eq("id", data.orderId)
       .maybeSingle();
@@ -134,6 +143,7 @@ export const getOrderForPayment = createServerFn({ method: "GET" })
       code: order.order_code,
       productName: order.product_name,
       size: order.size,
+      color: order.color,
       firstName: order.full_name.split(/\s+/)[0] ?? "",
       amount: order.amount == null ? null : Number(order.amount),
       status: order.payment_status,
@@ -150,7 +160,7 @@ export const startPayment = createServerFn({ method: "POST" })
     const { getRequestUrl } = await import("@tanstack/react-start/server");
     const { data: order, error } = await supabaseAdmin
       .from("product_orders")
-      .select("id, product_name, size, full_name, email, amount, payment_status")
+      .select("id, product_name, size, color, full_name, email, amount, payment_status")
       .eq("id", data.orderId)
       .maybeSingle();
     if (error) console.error(error);
@@ -161,7 +171,7 @@ export const startPayment = createServerFn({ method: "POST" })
     }
     const pref = await mp.createPreference({
       orderId: order.id,
-      title: `${order.product_name} (${order.size})`,
+      title: `${order.product_name} (${[order.color, order.size].filter(Boolean).join(", ")})`,
       amount: Number(order.amount),
       payer: { name: order.full_name, email: order.email },
       baseUrl: mp.siteUrl(getRequestUrl().origin),
@@ -195,7 +205,9 @@ export const startPixPayment = createServerFn({ method: "POST" })
     const { getRequestUrl } = await import("@tanstack/react-start/server");
     const { data: order, error } = await supabaseAdmin
       .from("product_orders")
-      .select("id, product_name, size, full_name, email, amount, payment_status, mp_payment_id")
+      .select(
+        "id, product_name, size, color, full_name, email, amount, payment_status, mp_payment_id",
+      )
       .eq("id", data.orderId)
       .maybeSingle();
     if (error) console.error(error);
@@ -215,7 +227,7 @@ export const startPixPayment = createServerFn({ method: "POST" })
 
     const charge = await mp.createPixPayment({
       orderId: order.id,
-      description: `${order.product_name} (${order.size})`,
+      description: `${order.product_name} (${[order.color, order.size].filter(Boolean).join(", ")})`,
       amount: Number(order.amount),
       payer: { name: order.full_name, email: order.email },
       baseUrl: mp.siteUrl(getRequestUrl().origin),
