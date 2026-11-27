@@ -104,12 +104,17 @@ export type SheetOrder = {
 
 const STATUS_LABEL: Record<string, string> = {
   approved: "Aprovado",
-  pending: "Pendente",
+  pending: "Aguardando pagamento",
   in_process: "Em análise",
-  rejected: "Recusado",
-  cancelled: "Cancelado",
+  rejected: "Pagamento não concluído",
+  cancelled: "Pagamento não concluído",
   refunded: "Estornado",
 };
+
+function statusLabel(order: Pick<SheetOrder, "amount" | "payment_status">) {
+  if (order.amount == null || Number(order.amount) <= 0) return "Sem pagamento";
+  return STATUS_LABEL[order.payment_status] ?? order.payment_status;
+}
 
 /** Colunas: data/hora | código | produto | tamanho | cor/modelo | nome | RA | telefone | e-mail | valor | conta depósito | status */
 export function appendOrderToSheet(order: SheetOrder): Promise<boolean> {
@@ -129,10 +134,49 @@ export function appendOrderToSheet(order: SheetOrder): Promise<boolean> {
     order.email,
     order.amount == null ? "" : Number(order.amount),
     process.env["SHEETS_CONTA_DEPOSITO"] || "Presidente MP",
-    order.amount == null || Number(order.amount) <= 0
-      ? "Sem pagamento"
-      : (STATUS_LABEL[order.payment_status] ?? order.payment_status),
+    statusLabel(order),
   ]);
+}
+
+/** Aba e última coluna (a do status) a partir de GOOGLE_SHEETS_RANGE, ex.: 'Pedidos do site'!A:L. */
+function sheetLayout() {
+  const range = process.env["GOOGLE_SHEETS_RANGE"] || "'Pedidos do site'!A:L";
+  const [tab = "", cols = "A:L"] = range.split("!");
+  const statusCol = cols.split(":")[1]?.replace(/\d+/g, "") || "L";
+  return { tab, statusCol };
+}
+
+/**
+ * Troca o status de um pedido que já está na planilha (procura o código na coluna B).
+ * Retorna false se não achar a linha ou se falhar.
+ */
+export async function updateOrderStatusInSheet(order: SheetOrder): Promise<boolean> {
+  const email = process.env["GOOGLE_SERVICE_ACCOUNT_EMAIL"];
+  const privateKey = process.env["GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY"];
+  const sheetId = process.env["GOOGLE_SHEETS_SPREADSHEET_ID"];
+  if (!email || !privateKey || !sheetId) return false;
+  const { tab, statusCol } = sheetLayout();
+  const base = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(sheetId)}/values/`;
+  try {
+    const token = await getAccessToken(email, privateKey);
+    const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
+    const res = await fetch(base + encodeURIComponent(`${tab}!B:B`), { headers });
+    if (!res.ok) throw new Error(`leitura falhou [${res.status}]: ${await res.text()}`);
+    const codes = ((await res.json()) as { values?: string[][] }).values ?? [];
+    const index = codes.findIndex((r) => r[0] === order.order_code);
+    if (index < 0) return false;
+    const cell = `${tab}!${statusCol}${index + 1}`;
+    const put = await fetch(base + encodeURIComponent(cell) + "?valueInputOption=RAW", {
+      method: "PUT",
+      headers,
+      body: JSON.stringify({ values: [[statusLabel(order)]] }),
+    });
+    if (!put.ok) throw new Error(`atualização falhou [${put.status}]: ${await put.text()}`);
+    return true;
+  } catch (e) {
+    console.error("[sheets] status", order.order_code, e);
+    return false;
+  }
 }
 
 function sheetsConfigured() {
@@ -143,29 +187,47 @@ function sheetsConfigured() {
   );
 }
 
+const ORDER_FIELDS =
+  "order_code, product_name, size, color, full_name, ra, phone, email, amount, payment_status";
+
 /**
- * Envia o pedido para a planilha uma única vez. Marca sheet_synced antes de enviar
- * (só quem conseguir marcar envia, evitando linha duplicada quando webhook e
- * consulta da página chegam juntos) e desmarca se o envio falhar, para tentar de novo.
+ * Mantém o pedido na planilha: na primeira vez acrescenta a linha (com o status
+ * atual, ex. "Aguardando pagamento"); depois só atualiza a coluna de status
+ * (Aprovado, Pagamento não concluído...). sheet_synced = a linha já existe.
+ * Só quem consegue marcar sheet_synced acrescenta, evitando linha duplicada
+ * quando webhook e página chegam juntos; se falhar, desmarca para tentar de novo.
  * Nunca lança erro: a planilha não pode atrapalhar o pedido.
  */
 export async function syncOrderToSheet(orderId: string): Promise<void> {
   if (!sheetsConfigured()) return;
   try {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: order, error } = await supabaseAdmin
+    const { data: claimed, error } = await supabaseAdmin
       .from("product_orders")
       .update({ sheet_synced: true })
       .eq("id", orderId)
       .eq("sheet_synced", false)
-      .select(
-        "order_code, product_name, size, color, full_name, ra, phone, email, amount, payment_status",
-      )
+      .select(ORDER_FIELDS)
       .maybeSingle();
     if (error) throw error;
-    if (!order) return;
-    if (!(await appendOrderToSheet(order))) {
-      await supabaseAdmin.from("product_orders").update({ sheet_synced: false }).eq("id", orderId);
+    if (claimed) {
+      if (!(await appendOrderToSheet(claimed))) {
+        await supabaseAdmin
+          .from("product_orders")
+          .update({ sheet_synced: false })
+          .eq("id", orderId);
+      }
+      return;
+    }
+    // Já está na planilha: só atualiza o status.
+    const { data: order } = await supabaseAdmin
+      .from("product_orders")
+      .select(ORDER_FIELDS)
+      .eq("id", orderId)
+      .maybeSingle();
+    if (order && !(await updateOrderStatusInSheet(order))) {
+      // Linha não encontrada (apagada à mão?): acrescenta de novo.
+      await appendOrderToSheet(order);
     }
   } catch (e) {
     console.error("[sheets] pedido", orderId, e);

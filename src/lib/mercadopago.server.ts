@@ -227,7 +227,8 @@ export async function syncPayment(paymentId: string, expectedOrderId?: string) {
     })
     .eq("id", orderId);
   if (upErr) throw upErr;
-  if (status === "approved") await syncOrderToSheet(orderId);
+  // Planilha acompanha cada mudança de status (aprovado, não concluído, estornado...).
+  if (status !== order.payment_status) await syncOrderToSheet(orderId);
   return { orderId, status };
 }
 
