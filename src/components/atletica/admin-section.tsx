@@ -25,7 +25,79 @@ export type Field = {
   label: string;
   required?: boolean;
   type: "text" | "textarea" | "url" | "number" | "date" | "time" | "image" | "images" | "list";
+  /** Exemplo mostrado nas caixinhas de um campo "list". */
+  placeholder?: string;
 };
+
+/** Tira espaços, caixinhas vazias e repetidos de um campo "list". */
+export function cleanList(v: unknown): string[] {
+  if (!Array.isArray(v)) return [];
+  const out: string[] = [];
+  for (const item of v) {
+    const s = String(item ?? "").trim();
+    if (s && !out.includes(s)) out.push(s);
+  }
+  return out;
+}
+
+/** Uma caixinha por opção, com + para adicionar e x para remover. */
+export function ListEditor({
+  id,
+  values,
+  placeholder,
+  onChange,
+}: {
+  id: string;
+  values: string[];
+  placeholder?: string | undefined;
+  onChange: (next: string[]) => void;
+}) {
+  const items = values.length ? values : [""];
+  const update = (i: number, value: string) =>
+    onChange(items.map((item, j) => (j === i ? value : item)));
+  const add = () => {
+    onChange([...items, ""]);
+    // Foca a caixinha nova depois que ela aparecer.
+    setTimeout(() => document.getElementById(`${id}-${items.length}`)?.focus(), 0);
+  };
+  const removeAt = (i: number) => onChange(items.filter((_, j) => j !== i));
+  return (
+    <div className="space-y-2">
+      {items.map((item, i) => (
+        <div key={i} className="flex gap-2">
+          <Input
+            id={i === 0 ? id : `${id}-${i}`}
+            placeholder={placeholder}
+            maxLength={60}
+            value={item}
+            onChange={(e) => update(i, e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                add();
+              }
+            }}
+          />
+          {items.length > 1 && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label="Remover opção"
+              onClick={() => removeAt(i)}
+            >
+              <X />
+            </Button>
+          )}
+        </div>
+      ))}
+      <Button type="button" variant="outline" size="sm" onClick={add}>
+        <Plus />
+        Adicionar opção
+      </Button>
+    </div>
+  );
+}
 type Row = Record<string, any> & { id: string };
 
 export function AdminSection({
@@ -78,7 +150,7 @@ export function AdminSection({
   async function save() {
     const e: Record<string, string> = {};
     for (const f of fields) {
-      const v = editing![f.key];
+      const v = f.type === "list" ? cleanList(editing![f.key]) : editing![f.key];
       const empty = Array.isArray(v) ? v.length === 0 : !String(v ?? "").trim();
       if (f.required && empty) e[f.key] = "Campo obrigatório";
       else if (f.type === "url" && !empty && !/^https?:\/\/\S+$/i.test(String(v).trim()))
@@ -92,7 +164,8 @@ export function AdminSection({
     for (const f of fields) {
       const v = editing![f.key];
       if (f.type === "number") payload[f.key] = v === "" ? null : Number(v);
-      else if (f.type === "images" || f.type === "list") payload[f.key] = v;
+      else if (f.type === "list") payload[f.key] = cleanList(v);
+      else if (f.type === "images") payload[f.key] = v;
       else payload[f.key] = typeof v === "string" ? v.trim() || (f.required ? v : null) : v;
     }
     setSaving(true);
@@ -242,19 +315,11 @@ export function AdminSection({
                         />
                       </>
                     ) : f.type === "list" ? (
-                      <Input
+                      <ListEditor
                         id={f.key}
-                        placeholder="Ex.: P, M, G, GG"
-                        value={(v || []).join(", ")}
-                        onChange={(e) =>
-                          set(
-                            f.key,
-                            e.target.value
-                              .split(",")
-                              .map((s) => s.trim())
-                              .filter(Boolean),
-                          )
-                        }
+                        values={v || []}
+                        placeholder={f.placeholder}
+                        onChange={(next) => set(f.key, next)}
                       />
                     ) : (
                       <Input

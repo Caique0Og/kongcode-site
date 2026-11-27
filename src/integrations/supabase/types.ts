@@ -98,6 +98,7 @@ export type Database = {
       };
       product_orders: {
         Row: {
+          color: string | null;
           amount: number | null;
           created_at: string;
           delivered_at: string | null;
@@ -119,6 +120,7 @@ export type Database = {
           user_id: string | null;
         };
         Insert: {
+          color?: string | null;
           amount?: number | null;
           created_at?: string;
           delivered_at?: string | null;
@@ -140,6 +142,7 @@ export type Database = {
           user_id?: string | null;
         };
         Update: {
+          color?: string | null;
           amount?: number | null;
           created_at?: string;
           delivered_at?: string | null;
@@ -164,6 +167,7 @@ export type Database = {
       };
       products: {
         Row: {
+          colors: string[];
           created_at: string;
           description: string;
           id: string;
@@ -174,6 +178,7 @@ export type Database = {
           sizes: string[];
         };
         Insert: {
+          colors?: string[];
           created_at?: string;
           description: string;
           id?: string;
@@ -184,6 +189,7 @@ export type Database = {
           sizes?: string[];
         };
         Update: {
+          colors?: string[];
           created_at?: string;
           description?: string;
           id?: string;

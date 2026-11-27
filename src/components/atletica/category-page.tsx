@@ -23,6 +23,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { images } from "@/lib/images";
+import { ImageLightbox } from "./image-lightbox";
 import {
   clubsQuery,
   productsQuery,
@@ -133,6 +134,7 @@ function Clubs() {
 function Products() {
   const { data, isLoading } = useQuery(productsQuery);
   const [buy, setBuy] = useState<Product | null>(null);
+  const [zoom, setZoom] = useState<{ product: Product; index: number } | null>(null);
   if (isLoading) return <Loading />;
   if (!data?.length) return <Empty category="roupas" />;
   return (
@@ -141,19 +143,27 @@ function Products() {
         {data.map((p) => (
           <div key={p.id} className="explore-card">
             {p.images[0] && (
-              <div className="aspect-[109/70] overflow-hidden">
+              <button
+                type="button"
+                aria-label={`Ampliar foto de ${p.name}`}
+                onClick={() => setZoom({ product: p, index: 0 })}
+                className="block aspect-[109/70] w-full cursor-zoom-in overflow-hidden"
+              >
                 <img src={p.images[0]} alt={p.name} className="h-full w-full object-cover" />
-              </div>
+              </button>
             )}
             {p.images.length > 1 && (
               <div className="flex gap-2 overflow-x-auto border-t border-border p-3">
-                {p.images.slice(1).map((src) => (
-                  <img
+                {p.images.slice(1).map((src, i) => (
+                  <button
+                    type="button"
                     key={src}
-                    src={src}
-                    alt=""
-                    className="h-16 w-16 shrink-0 rounded object-cover"
-                  />
+                    aria-label={`Ampliar foto ${i + 2} de ${p.name}`}
+                    onClick={() => setZoom({ product: p, index: i + 1 })}
+                    className="shrink-0 cursor-zoom-in overflow-hidden rounded"
+                  >
+                    <img src={src} alt="" className="h-16 w-16 object-cover" />
+                  </button>
                 ))}
               </div>
             )}
@@ -167,6 +177,11 @@ function Products() {
                 )}
               </div>
               <p className="mt-1 text-sm text-muted-foreground">{p.description}</p>
+              {p.colors.length > 0 && (
+                <p className="mt-3 text-xs text-muted-foreground">
+                  Cores/modelos: <span className="text-foreground">{p.colors.join(", ")}</span>
+                </p>
+              )}
               {p.sizes.length > 0 && (
                 <div className="mt-3 flex flex-wrap gap-2">
                   {p.sizes.map((s) => (
@@ -185,6 +200,12 @@ function Products() {
         ))}
       </div>
       {buy && <OrderDialog product={buy} open={!!buy} onOpenChange={(o) => !o && setBuy(null)} />}
+      <ImageLightbox
+        images={zoom?.product.images ?? []}
+        title={zoom?.product.name ?? ""}
+        index={zoom?.index ?? null}
+        onClose={() => setZoom(null)}
+      />
     </>
   );
 }
@@ -274,7 +295,11 @@ export function CategoryPage({ category }: { category: Cat }) {
       {category === "clubes" ? <Clubs /> : category === "roupas" ? <Products /> : <Events />}
       <div className="mt-10 flex items-center justify-between gap-4">
         <p className="font-display text-xl font-semibold">O orgulho de ser KongCode.</p>
-        <img src={images.gorilaBusto} alt="Gorila do KongCode" className="h-20 w-20 object-contain" />
+        <img
+          src={images.gorilaBusto}
+          alt="Gorila do KongCode"
+          className="h-20 w-20 object-contain"
+        />
       </div>
       <Button asChild variant="link" className="mt-4 px-0">
         <Link to={category === "clubes" ? "/eventos" : "/clubes"}>

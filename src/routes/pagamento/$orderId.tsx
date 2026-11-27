@@ -222,7 +222,9 @@ function OrderSummary({
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="font-display text-2xl font-semibold">{order.productName}</p>
-              <p className="text-sm text-muted-foreground">Tamanho {order.size}</p>
+              <p className="text-sm text-muted-foreground">
+                {order.color ? `${order.color} · ` : ""}Tamanho {order.size}
+              </p>
             </div>
             <p className="font-display text-2xl font-semibold text-primary">
               {formatPrice(order.amount) ?? "—"}

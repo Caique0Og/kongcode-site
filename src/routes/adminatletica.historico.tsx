@@ -40,6 +40,8 @@ const FIELD: Record<string, string> = {
   whatsapp_url: "WhatsApp",
   price: "Preço",
   sizes: "Tamanhos",
+  colors: "Cores/Modelos",
+  color: "Cor/Modelo",
   order_url: "Link de pedido",
   event_date: "Data",
   event_time: "Horário",

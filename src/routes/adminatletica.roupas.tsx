@@ -17,9 +17,16 @@ export const Route = createFileRoute("/adminatletica/roupas")({
         { key: "price", label: "Preço (R$)", type: "number", required: true },
         {
           key: "sizes",
-          label: "Tamanhos disponíveis (separados por vírgula)",
+          label: "Tamanhos disponíveis",
           type: "list",
+          placeholder: "Ex.: M",
           required: true,
+        },
+        {
+          key: "colors",
+          label: "Cores/Modelos (opcional)",
+          type: "list",
+          placeholder: "Ex.: Azul",
         },
         { key: "order_url", label: "Link de compra/pedido (opcional)", type: "url" },
       ]}

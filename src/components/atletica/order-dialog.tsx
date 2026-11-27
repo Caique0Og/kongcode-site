@@ -30,7 +30,7 @@ export function OrderDialog({
   const navigate = useNavigate();
   const user = useAuthUser();
   const { pathname } = useLocation();
-  const [f, setF] = useState({ fullName: "", ra: "", phone: "", email: "", size: "" });
+  const [f, setF] = useState({ fullName: "", ra: "", phone: "", email: "", size: "", color: "" });
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
   // Preenche nome e e-mail com os dados da conta logada.
@@ -47,6 +47,7 @@ export function OrderDialog({
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setErr("");
+    if (product.colors.length > 0 && !f.color) return setErr("Escolha a cor/modelo.");
     const parsed = orderSchema.safeParse({
       ...f,
       productId: product.id,
@@ -56,7 +57,7 @@ export function OrderDialog({
     setBusy(true);
     try {
       const res = await send({ data: parsed.data });
-      setF((prev) => ({ ...prev, ra: "", phone: "", size: "" }));
+      setF((prev) => ({ ...prev, ra: "", phone: "", size: "", color: "" }));
       onOpenChange(false);
       if (res.needsPayment) {
         await navigate({ to: "/pagamento/$orderId", params: { orderId: res.orderId } });
@@ -122,6 +123,23 @@ export function OrderDialog({
               <Input id="o-email" type="email" value={f.email} readOnly disabled />
               <p className="text-xs text-muted-foreground">E-mail da sua conta.</p>
             </div>
+            {product.colors.length > 0 && (
+              <div className="space-y-1.5">
+                <Label>Cor / modelo</Label>
+                <div className="flex flex-wrap gap-2">
+                  {product.colors.map((c) => (
+                    <button
+                      type="button"
+                      key={c}
+                      onClick={() => setF({ ...f, color: c })}
+                      className={`rounded border px-3 py-1 text-sm ${f.color === c ? "border-primary bg-primary text-primary-foreground" : "border-border"}`}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="space-y-1.5">
               <Label htmlFor="o-size">Tamanho</Label>
               {product.sizes.length === 0 ? (

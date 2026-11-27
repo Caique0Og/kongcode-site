@@ -124,7 +124,11 @@ function OrderRow({ order }: { order: MyOrder }) {
         <div className="min-w-0">
           <p className="font-mono text-sm font-semibold tracking-wider">{order.code}</p>
           <p className="mt-1 font-semibold">
-            {order.productName} <span className="text-muted-foreground">· {order.size}</span>
+            {order.productName}{" "}
+            <span className="text-muted-foreground">
+              · {order.color ? `${order.color} · ` : ""}
+              {order.size}
+            </span>
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
             Pedido em {date}

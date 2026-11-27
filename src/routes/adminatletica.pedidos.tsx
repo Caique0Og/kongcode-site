@@ -42,7 +42,7 @@ function Pedidos() {
       const { data, error } = await supabase
         .from("product_orders")
         .select(
-          "id, order_code, created_at, product_name, size, full_name, ra, phone, email, amount, payment_status, paid_at, delivery_status",
+          "id, order_code, created_at, product_name, size, color, full_name, ra, phone, email, amount, payment_status, paid_at, delivery_status",
         )
         .order("created_at", { ascending: false })
         .limit(500);
@@ -57,7 +57,7 @@ function Pedidos() {
       const paidOrFree = o.payment_status === "approved" || !o.amount;
       if (filter === "pagos" && !paidOrFree) return false;
       if (!q) return true;
-      return [o.order_code, o.full_name, o.email, o.ra, o.product_name]
+      return [o.order_code, o.full_name, o.email, o.ra, o.product_name, o.color]
         .filter(Boolean)
         .some((v) => String(v).toLowerCase().includes(q));
     });
@@ -123,7 +123,9 @@ function Pedidos() {
               <span className="font-mono font-semibold">{o.order_code}</span>
               <span>
                 {o.product_name}
-                {o.size ? ` (${o.size})` : ""}
+                {[o.color, o.size].some(Boolean)
+                  ? ` (${[o.color, o.size].filter(Boolean).join(", ")})`
+                  : ""}
               </span>
               <span className="font-semibold">
                 {brl(o.amount == null ? null : Number(o.amount))}
