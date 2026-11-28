@@ -8,9 +8,8 @@ export const orderSchema = z.object({
   ra: z
     .string()
     .trim()
-    .regex(/^\d{0,20}$/, "O RA deve conter apenas números")
-    .optional()
-    .or(z.literal("")),
+    .min(1, "Informe seu RA Impacta")
+    .regex(/^\d{1,20}$/, "O RA deve conter apenas números"),
   phone: z
     .string()
     .trim()
