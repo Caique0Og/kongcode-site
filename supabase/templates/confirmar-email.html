@@ -1,0 +1,113 @@
+<!--
+  E-mail de confirmação de cadastro (Supabase > Authentication > Emails > Confirm sign up).
+  Assunto sugerido: Confirme seu e-mail | KongCode
+  Precisa de SMTP próprio configurado no Supabase para editar o template.
+  {{ .ConfirmationURL }} é trocado pelo Supabase pelo link de confirmação.
+-->
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="supported-color-schemes" content="dark light" />
+    <title>Confirme seu e-mail | KongCode</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=DM+Sans:wght@400;600&display=swap");
+      @media (max-width: 600px) {
+        .card { padding: 28px 22px !important; }
+        .title { font-size: 34px !important; }
+      }
+    </style>
+  </head>
+  <body style="margin:0;padding:0;background:#0a1018;">
+    <!-- Texto de pré-visualização (aparece na lista de e-mails) -->
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0;">
+      Falta só um clique para ativar sua conta no site da KongCode.
+    </div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#0a1018;">
+      <tr>
+        <td align="center" style="padding:32px 16px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;">
+            <!-- Marca -->
+            <tr>
+              <td style="padding:0 4px 20px 4px;">
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td style="vertical-align:middle;padding-right:12px;">
+                      <img src="https://kongcode-site.kongcode-site.workers.dev/images/impacta_logo.jpeg" width="48" height="48" alt="KongCode" style="display:block;border:0;border-radius:6px;" />
+                    </td>
+                    <td style="vertical-align:middle;font-family:'Barlow Condensed','Arial Narrow',Arial,sans-serif;font-weight:800;font-size:28px;line-height:0.9;color:#f3f6f9;">
+                      KONG<span style="color:#ff7f1f;">CODE</span>
+                      <div style="font-family:'DM Sans',Arial,sans-serif;font-size:9px;font-weight:600;letter-spacing:2px;color:#93a0ad;padding-top:6px;">
+                        ATLÉTICA TECNOLOGIA IMPACTA
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- Faixa laranja -->
+            <tr>
+              <td style="background:#ff7f1f;height:6px;line-height:6px;font-size:0;border-radius:6px 6px 0 0;">&nbsp;</td>
+            </tr>
+
+            <!-- Cartão -->
+            <tr>
+              <td class="card" style="background:#121a24;border:1px solid #2a3440;border-top:0;border-radius:0 0 6px 6px;padding:40px 36px;">
+                <p style="margin:0 0 10px 0;font-family:'DM Sans',Arial,sans-serif;font-size:12px;font-weight:600;letter-spacing:2px;color:#ff7f1f;">
+                  QUASE LÁ
+                </p>
+                <h1 class="title" style="margin:0 0 16px 0;font-family:'Barlow Condensed','Arial Narrow',Arial,sans-serif;font-weight:800;font-size:40px;line-height:1;color:#f3f6f9;text-transform:uppercase;">
+                  Confirme seu <span style="white-space:nowrap;">e&#8209;mail</span>
+                </h1>
+                <p style="margin:0 0 28px 0;font-family:'DM Sans',Arial,sans-serif;font-size:16px;line-height:1.6;color:#c9d2db;">
+                  Bem-vindo(a) à torcida! Clique no botão abaixo para ativar sua conta no site da
+                  KongCode e acompanhar seus pedidos, clubes e eventos.
+                </p>
+
+                <!-- Botão -->
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td align="center" bgcolor="#ff7f1f" style="border-radius:6px;">
+                      <a href="{{ .ConfirmationURL }}" target="_blank"
+                         style="display:inline-block;padding:15px 32px;font-family:'Barlow Condensed','Arial Narrow',Arial,sans-serif;font-weight:700;font-size:20px;letter-spacing:1px;color:#0a1018;text-decoration:none;text-transform:uppercase;border-radius:6px;">
+                        Confirmar meu e-mail
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+
+                <p style="margin:28px 0 6px 0;font-family:'DM Sans',Arial,sans-serif;font-size:13px;line-height:1.6;color:#93a0ad;">
+                  Se o botão não funcionar, copie e cole este link no navegador:
+                </p>
+                <p style="margin:0 0 28px 0;font-family:'DM Sans',Arial,sans-serif;font-size:13px;line-height:1.5;word-break:break-all;">
+                  <a href="{{ .ConfirmationURL }}" target="_blank" style="color:#5ec4ff;text-decoration:underline;">{{ .ConfirmationURL }}</a>
+                </p>
+
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                  <tr><td style="border-top:1px solid #2a3440;font-size:0;line-height:0;">&nbsp;</td></tr>
+                </table>
+                <p style="margin:20px 0 0 0;font-family:'DM Sans',Arial,sans-serif;font-size:13px;line-height:1.6;color:#93a0ad;">
+                  Não criou uma conta na KongCode? Pode ignorar este e-mail, nada vai acontecer.
+                </p>
+              </td>
+            </tr>
+
+            <!-- Rodapé -->
+            <tr>
+              <td align="center" style="padding:24px 8px 0 8px;font-family:'DM Sans',Arial,sans-serif;font-size:12px;line-height:1.6;color:#6b7785;">
+                <span style="font-family:'Barlow Condensed','Arial Narrow',Arial,sans-serif;font-weight:700;font-size:15px;color:#c9d2db;">
+                  O ORGULHO DE SER <span style="color:#ff7f1f;">KONGCODE</span>
+                </span><br />
+                Atlética de Tecnologia da Impacta ·
+                <a href="https://kongcode-site.kongcode-site.workers.dev" style="color:#93a0ad;text-decoration:underline;">kongcode-site.kongcode-site.workers.dev</a>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
