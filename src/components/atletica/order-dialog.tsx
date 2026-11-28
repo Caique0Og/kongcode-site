@@ -99,7 +99,7 @@ export function OrderDialog({
               <Input id="o-name" maxLength={120} value={f.fullName} onChange={set("fullName")} />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="o-ra">RA Impacta</Label>
+              <Label htmlFor="o-ra">RA Impacta (opcional)</Label>
               <Input
                 id="o-ra"
                 inputMode="numeric"
